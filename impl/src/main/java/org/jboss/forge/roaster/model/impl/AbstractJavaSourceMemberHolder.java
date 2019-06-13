@@ -144,6 +144,59 @@ public abstract class AbstractJavaSourceMemberHolder<O extends JavaSource<O> & P
       return Collections.unmodifiableList(result);
    }
 
+   public void moveAfter(String predecessor, String name) {
+      int predecessorIndex = -1;
+      int toMoveIndex = -1;
+      int index = 0;
+      FieldDeclaration predecessorField = null;
+      FieldDeclaration toMoveField = null;
+      List<BodyDeclaration> bodyDeclarations = getDeclaration().bodyDeclarations();
+      for (BodyDeclaration bodyDeclaration : bodyDeclarations)
+      {
+         if (bodyDeclaration instanceof FieldDeclaration)
+         {
+
+            FieldDeclaration fieldDeclaration = (FieldDeclaration) bodyDeclaration;
+            List<VariableDeclarationFragment> fragments = fieldDeclaration.fragments();
+            for (VariableDeclarationFragment fragment : fragments)
+            {
+               if (predecessorField == null && predecessor.equals(fragment.getName().getFullyQualifiedName())) {
+                  predecessorField = fieldDeclaration;
+                  predecessorIndex = index;
+                  break;
+               }
+               if (toMoveField == null && name.equals(fragment.getName().getFullyQualifiedName())) {
+                  toMoveField = fieldDeclaration;
+                  toMoveIndex = index;
+                  break;
+               }
+            }
+         }
+         index++;
+         if (predecessorField != null && toMoveField != null) {
+            break;
+         }
+      }
+      if (predecessorField != null && toMoveField != null) {
+         if (toMoveIndex < predecessorIndex) {
+            bodyDeclarations.remove(toMoveIndex);
+            if (predecessorIndex == bodyDeclarations.size()) {
+               bodyDeclarations.add(toMoveField);
+            } else {
+               bodyDeclarations.add(predecessorIndex, toMoveField);
+            }
+         }
+         if (toMoveIndex > predecessorIndex) {
+            bodyDeclarations.remove(toMoveIndex);
+            if (predecessorIndex + 1 == bodyDeclarations.size()) {
+               bodyDeclarations.add(toMoveField);
+            } else {
+               bodyDeclarations.add(predecessorIndex + 1, toMoveField);
+            }
+         }
+      }
+   }
+
    @Override
    public FieldSource<O> getField(final String name)
    {
